@@ -3,9 +3,6 @@ function imageClick(url) {
 }
 
 
-
-//test
-
 function Day(date, todo, finished) {
     this.date = date;
     this.todo = todo;
@@ -63,10 +60,6 @@ function plusClick() {
     var weekDays = prompt("Please indicate on which days this HaBit occurs by specifying each day by its first 2 letters.", "Type days here");
     if (habitName != null && weekDays != null) {
         catalogus.addHabit(new Habit(habitName, false, weekDays));
-        //var name = catalogus.getHabit(catalogus.getCounter()).getName();
-        //var textHeight = 250 + (80*counter2)
-        //var textstyle = "position:absolute; TOP:" + textHeight + "; LEFT:160px font-family:'Courier New'"
-        //show_text(name, "position:absolute; ")
     }
     var localName = catalogus.getHabit(catalogus.getCounter()).getName();
     var imageHeight = 250+(80*counter);
