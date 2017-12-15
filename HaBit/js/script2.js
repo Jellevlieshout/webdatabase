@@ -10,11 +10,18 @@ function Day(date, todo, finished) {
     this.finished = finished;
 }
 
+
+
+
 //Class: Habit
 function Habit(name, completion, days) {
     this.name = name;
     this.completion = completion;
     this.days = days;
+}
+
+Habit.prototype.getDays = function() {
+    return this.days;
 }
 
 Habit.prototype.getName = function() {
@@ -25,8 +32,21 @@ Habit.prototype.toString = function() {
     alert(this.name);
 }
 
-Habit.prototype.removeHabit = function(completion, position) {
+function deleteClick(index) {
+    if (confirm("Are you sure you want to delete this HaBit?") === true) {
+        catalogus.getHabit(index).removeHabit(false);
+        catalogus.removeHabitCatalog(index);
+        catalogus.removeHabits();
+        catalogus.displayHabits();  
+    }
+
+}
+
+
+
+Habit.prototype.removeHabit = function(completion) {
     if (completion === false) {
+        var position = catalogus.getIndex(this);
         var localName = this.name;
         var oldBox = document.getElementById(localName+"box");
         oldBox.parentNode.removeChild(oldBox);
@@ -36,13 +56,20 @@ Habit.prototype.removeHabit = function(completion, position) {
     
         var oldText = document.getElementById(localName+"text");
         oldText.parentNode.removeChild(oldText);
-    
-        var oldCheckboxChecked = document.getElementById(localName+"checkboxchecked");
-        oldCheckboxChecked.parentNode.removeChild(oldCheckboxChecked);
+
+        var oldTextDays = document.getElementById(localName+"daystext");
+        oldTextDays.parentNode.removeChild(oldTextDays);
         
-        var oldPlus = document.getElementById(position+1);
-        console.log(position);
-        oldPlus.parentNode.removeChild(oldPlus);
+        var oldplus;
+        for (var i = 0; i < 10; i++) {
+            oldPlus = document.getElementById(i);
+            if (oldPlus != null) {
+                oldPlus.parentNode.removeChild(oldPlus);
+            }
+        }
+
+        var oldDelete = document.getElementById(localName+"delete");
+        oldDelete.parentNode.removeChild(oldDelete);
     }
     else {
         //
@@ -70,17 +97,51 @@ toDoCatalog.prototype.getCounter = function() {
     return this.catalogcounter;
 }
 
-toDoCatalog.prototype.removeHabit = function(i) {
-    this.elements[i].removeHabit(false, this.catalogcounter);
+toDoCatalog.prototype.removeHabitCatalog = function(i) {
     this.elements.splice(i, 1);
     this.catalogcounter = this.catalogcounter - 1;
+    this.clean(null);
 }
 
 toDoCatalog.prototype.displayHabits = function() {
+    if (this.catalogcounter === -1) {
+        var plusHeight = 250;
+        var plusStyle = "position:absolute; TOP:" + plusHeight +"px; LEFT:270px";
+        show_image("HaBit_plusicon.jpg", 40, 40,"Plusicon", plusStyle, 0 , "plusClick()");
+    }
     for (var i = 0; i < this.catalogcounter+1; i++) {
-        this.elements[i].displayHabit(false, i);
+        this.elements[i].displayHabit(false);
     }
 }
+
+
+toDoCatalog.prototype.getIndex = function(habit) {
+    var indexnum = -1; 
+    for (i = 0; i < this.catalogcounter+1; i++) {
+        if (this.elements[i] === habit) {
+            indexnum = i;
+        }
+    }
+    return indexnum;
+}
+
+toDoCatalog.prototype.removeHabits = function() {
+    for (var i = 0; i < 200; i++) {
+        if (this.elements[i] != null) {
+            this.elements[i].removeHabit(false);
+        }
+    }
+}
+
+toDoCatalog.prototype.clean = function(deleteValue) {
+    for (var i = 0; i < this.length; i++) {
+      if (this[i] == deleteValue) {         
+        this.splice(i, 1);
+        i--;
+      }
+    }
+    return this;
+  };
 
 //Class: finishedCatalog
 function finishedCatalog() {
@@ -101,10 +162,19 @@ finishedCatalog.prototype.getCounter = function() {
     return this.catalogcounter;
 }
 
-finishedCatalog.prototype.removeHabit = function(i) {
-    this.elements[i].removeHabit(true, this.catalogcounter);
+finishedCatalog.prototype.removeHabitCatalog = function(i) {
     this.elements.splice(i, 1);
     this.catalogcounter = this.catalogcounter - 1;
+}
+
+finishedCatalog.prototype.getIndex = function(habit) {
+    var indexnum = -1; 
+    for (var i = 0; i < this.catalogcounter+1; i++) {
+        if (this.elements[i] === habit) {
+            indexnum = i;
+        }
+    }
+    return indexnum;
 }
 
 
@@ -123,11 +193,7 @@ var main = function() {
 
 var catalogus = new toDoCatalog();
 var catalogus2 = new finishedCatalog();
-var counter = 1;
-var counter2 = 0;
-var plusClickCounter = 0;
 function plusClick() {
-    catalogus.getCounter();
     var habitName = prompt("Please enter a name for a new HaBit:", "Enter HaBit name");
     var weekDays = prompt("Please indicate on which days this HaBit occurs by specifying each day by its first 2 letters.", "Type days here");
     if (habitName != null && weekDays != null) {
@@ -138,17 +204,22 @@ function plusClick() {
     
 }
 
-Habit.prototype.displayHabit = function(completion, position) {
+Habit.prototype.displayHabit = function(completion) {
+    
     if (completion === false) {
+        var position = catalogus.getIndex(this);
         this.displayToDoHabit(position);
     }
     else {
+        var position = catalogus2.getIndex(this);
         this.displayFinishedHabit(position);
     }
 
 }
 
-Habit.prototype.displayToDoHabit = function(position) {
+Habit.prototype.displayToDoHabit = function() {
+    var plusPosition = catalogus.getCounter();
+    var position = catalogus.getIndex(this);
     var localName = catalogus.getHabit(position).getName();
     var plusHeight = 250+(80*(position+1));
     var boxHeight = 230+(80*position);
@@ -157,16 +228,25 @@ Habit.prototype.displayToDoHabit = function(position) {
     var habitBoxStyle = "position:absolute; TOP:" + boxHeight + "px; LEFT:150px"
     var checkBoxStyle = "position:absolute; TOP:" + checkboxHeight + "px; LEFT:370px"
     var deleteStyle = "position:absolute; TOP:" + checkboxHeight + "px; LEFT: 435px"
-    catalogus.getHabit(catalogus.getCounter()).toString();
     show_image("HaBit_habitboxempty.jpg", 280, 80, "Box", habitBoxStyle, localName+"box");
     show_image("HaBit_checkboxempty.jpg", 20, 20, "checkbox", checkBoxStyle, localName+"checkbox", "checkboxClick(catalogus.getHabit("+ position +"), " + position + ")");
-    show_image("HaBit_plusicon.jpg", 40, 40,"Plusicon", plusStyle, position+1, "plusClick()");
-    show_image("Habit_deleteicon.jpg", 20, 20, "Deleteicon", deleteStyle, position, "deleteClick()");
+    
+    var oldplus;
+    for (var i = 0; i < 10; i++) {
+        oldPlus = document.getElementById(i);
+        if (oldPlus != null) {
+            oldPlus.parentNode.removeChild(oldPlus);
+        }
+    }
+    show_image("HaBit_plusicon.jpg", 40, 40,"Plusicon", plusStyle, plusPosition+1, "plusClick()");
+    show_image("Habit_deleteicon.jpg", 20, 20, "Deleteicon", deleteStyle, localName+"delete", "deleteClick(" + catalogus.getIndex(this) +")");
     var textHeight = 245 + (80*position)
     var textstyle = "position:absolute; TOP:" + textHeight + "px; LEFT:160px; font-family:'Courier New'"
-    show_text(localName, textstyle, undefined, localName+"text");
-    var oldPlus = document.getElementById(position);
-    oldPlus.parentNode.removeChild(oldPlus);
+    var textstyledays = "position:absolute; TOP:" + (textHeight+20) + "px; LEFT:160px; font-family:'Courier New'; font-size:13px"
+    show_text(localName, textstyle, "editHabit("+ catalogus.getIndex(this)+")", localName+"text");
+    show_text(this.days, textstyledays, undefined, localName+"daystext");
+    var plusPosition = catalogus.getCounter();
+    console.log(plusPosition);
 }
 
 Habit.prototype.displayFinishedHabit = function(position) {
@@ -217,7 +297,7 @@ function show_text(text, style, onclick, id) {
     p.setAttribute("style", style);
     p.id = id;
     if (onclick != undefined) {
-        text.setAttribute("onclick", onclick);
+        p.setAttribute("onclick", onclick);
     }
 
     // This next line will just add it to the <body> tag
@@ -226,26 +306,43 @@ function show_text(text, style, onclick, id) {
 }
 
 
-function checkboxClick(habit, position) {
+function checkboxClick(habit) {
+    var position = catalogus.getIndex(habit);
     var localName = habit.getName();
-    var stylebox = "position:absolute; TOP:" + checkboxHeight + "px; LEFT:370px";
-    var imageHeight = 250+(80*position+1);
     var plusHeight = 250+(80*catalogus.getCounter());
     var plusIconStyle = "position:absolute; TOP:" + plusHeight +"px; LEFT:280px";
-    var boxHeight = 230+(80*position);
-    var checkboxHeight = boxHeight + 30;
-    var style2 = "position:absolute; TOP:" + imageHeight +"px; LEFT:550px";
-    var style3 = "position:absolute; TOP:" + boxHeight + "px; LEFT:800px"
-    var stylebox = "position:absolute; TOP:" + checkboxHeight + "px; LEFT:1030px"
-    var textHeight = 245 + (80*position)
-    show_image("HaBit_checkboxchecked.jpg", 20, 20, "checkbox", stylebox, localName+"checkboxchecked");
-   
-    catalogus.removeHabit(position);
     catalogus2.addHabit(habit);
     console.log(catalogus2.getCounter());
     catalogus2.getHabit(catalogus2.getCounter()).displayHabit(true, catalogus2.getCounter());
-    show_image("HaBit_plusicon.jpg", 40, 40,"Plusicon", plusIconStyle, catalogus.getCounter()+1, "plusClick()");
+    show_image("HaBit_plusicon.jpg", 40, 40,"Plusicon", plusIconStyle, catalogus.getCounter(), "plusClick()");
+
+    catalogus.removeHabits();
+
+    var plusPosition = catalogus.getCounter();
+    catalogus.removeHabitCatalog(plusPosition);
+
     catalogus.displayHabits();
     
     
+    
+}
+
+toDoCatalog.prototype.insertHabit = function(habit, i) {
+    this.elements.splice(i,0,habit);
+    this.catalogcounter = this.catalogcounter + 1;
+}
+
+function editHabit(index) {
+    console.log(index);
+    
+    catalogus.getHabit(index).removeHabit(false);
+    var habitName = prompt("Please enter a new name for the HaBit '"+catalogus.getHabit(index).getName() +"'", catalogus.getHabit(index).getName());
+    var weekDays = prompt("Please indicate on which days this HaBit occurs by specifying each day by its first 2 letters.", catalogus.getHabit(index).getDays());
+    catalogus.removeHabitCatalog(index);
+    if (habitName != null && weekDays != null) {
+        catalogus.insertHabit(new Habit(habitName, false, weekDays), index);
+    }
+    console.log(catalogus);
+    catalogus.getHabit(index).displayHabit(false, index);
+
 }
